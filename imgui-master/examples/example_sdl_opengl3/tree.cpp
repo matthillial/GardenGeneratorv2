@@ -185,7 +185,7 @@ public:
 					glm::mat4 scaleModel = glm::scale(model, glm::vec3(0.01, structurev2.at(i).second, 0.01));
 					//scaleModel = glm::translate(scaleModel, glm::vec3(0, 5, 0));
 					//transform segment vertices by scalemodel and add to treemodel
-					for (int j = 0; j < sizeof(segment)/sizeof(segment[0]); j += 3) {
+					for (int j = 0; j < sizeof(segment)/sizeof(segment[0]); j += 8) {
 						glm::vec4 vertex = scaleModel * glm::vec4(segment[j], segment[j + 1], segment[j + 2], 1);
 						//printf("Vertex: %f, %f, %f\n", vertex[0], vertex[1], vertex[2]);
 						treeModel.push_back(vertex[0]);
