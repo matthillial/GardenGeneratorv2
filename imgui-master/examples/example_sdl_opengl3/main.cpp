@@ -322,8 +322,8 @@ int main(int, char**)
 	float col1[3] = { 0.5f, 0.27f, 0.07f };
 
 	//growth stuff
-	 static float growthv = 0.001f;
-	 static float lastgrowthv = 0.001f;
+	 static float growthv = 0.1f;
+	 static float lastgrowthv = 0.1f;
 
 
     // Main loop
@@ -411,7 +411,7 @@ int main(int, char**)
             ImGui::Text("here are some tools you can use!");               // Display some text (you can use a format strings too)
             ImGui::Checkbox("imgui library demo", &show_demo_window);      // Edit bools storing our window open/close state
 
-            ImGui::SliderFloat("tree growth variance", &growthv, 0.0f, 0.1f);            // Edit 1 float using a slider from 0.0f to 1.0f
+            ImGui::SliderFloat("tree growth variance", &growthv, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
 
 
 
@@ -475,7 +475,7 @@ int main(int, char**)
 			if (ImGui::Button("continue growth")) {
 				growthv = lastgrowthv;
 				if(lastgrowthv == 0){
-					growthv = 0.001;
+					growthv = 0.1;
 				}
 			}
 
