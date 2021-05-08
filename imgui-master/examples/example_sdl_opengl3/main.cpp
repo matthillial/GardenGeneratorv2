@@ -322,7 +322,8 @@ int main(int, char**)
 	float col1[3] = { 0.5f, 0.27f, 0.07f };
 	
 	//growth stuff
-	 static float growthv = 0.01f;
+	 static float growthv = 0.001f;
+	 static float lastgrowthv = 0.001f;
 	
 	
     // Main loop
@@ -463,8 +464,21 @@ int main(int, char**)
 				if(trees.empty()){
 				trees.push_back(tree(start, rules1, glm::vec3(0, 0, 0), 10, 0.1));
 				}
-				
+					
 			}
+			ImGui::SameLine();
+			if (ImGui::Button("pause growth")) {
+				lastgrowthv = growthv;
+				growthv = 0;
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("continue growth")) {
+				growthv = lastgrowthv;
+				if(lastgrowthv == 0){
+					growthv = 0.001;
+				}
+			}
+			
 
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
             ImGui::End();

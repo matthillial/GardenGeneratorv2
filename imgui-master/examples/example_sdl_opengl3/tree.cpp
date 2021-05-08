@@ -119,7 +119,7 @@ public:
 		growthTime = 11;
 		rules = rulesIn;
 		segments = 0;
-		growthSpeed = 0.01;
+		growthSpeed = 0.001;
 		for (int i = 0; i < start.size(); i++) {
 			if (start.at(i).first == 'F') segments++;
 		}
