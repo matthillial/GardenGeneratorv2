@@ -1,0 +1,13 @@
+﻿  Cube3D.cpp
+C:\Users\matth\Documents\U of M\csci5607\GardenGenerator\GardenGenerator\OpenGLStarterCode\Cube3D.cpp(5,1): warning C4005: '_CRT_SECURE_NO_WARNINGS': macro redefinition
+C:\Users\matth\Documents\U of M\csci5607\GardenGenerator\GardenGenerator\OpenGLStarterCode\Cube3D.cpp : message : see previous definition of '_CRT_SECURE_NO_WARNINGS'
+C:\Users\matth\Documents\U of M\csci5607\GardenGenerator\GardenGenerator\GardenGenerator\tree.cpp(179,1): warning C4244: '+=': conversion from 'double' to '_Ty2', possible loss of data
+C:\Users\matth\Documents\U of M\csci5607\GardenGenerator\GardenGenerator\GardenGenerator\tree.cpp(179,1): warning C4244:         with
+C:\Users\matth\Documents\U of M\csci5607\GardenGenerator\GardenGenerator\GardenGenerator\tree.cpp(179,1): warning C4244:         [
+C:\Users\matth\Documents\U of M\csci5607\GardenGenerator\GardenGenerator\GardenGenerator\tree.cpp(179,1): warning C4244:             _Ty2=float
+C:\Users\matth\Documents\U of M\csci5607\GardenGenerator\GardenGenerator\GardenGenerator\tree.cpp(179,1): warning C4244:         ]
+C:\Users\matth\Documents\U of M\csci5607\GardenGenerator\GardenGenerator\OpenGLStarterCode\Cube3D.cpp(217,66): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\matth\Documents\U of M\csci5607\GardenGenerator\GardenGenerator\OpenGLStarterCode\Cube3D.cpp(257,19): warning C4244: 'initializing': conversion from 'Uint32' to 'float', possible loss of data
+C:\Users\matth\Documents\U of M\csci5607\GardenGenerator\GardenGenerator\OpenGLStarterCode\Cube3D.cpp(303,17): warning C4244: 'initializing': conversion from 'Uint32' to 'float', possible loss of data
+C:\Users\matth\Documents\U of M\csci5607\GardenGenerator\GardenGenerator\OpenGLStarterCode\Cube3D.cpp(306,41): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+  GardenGenerator.vcxproj -> C:\Users\matth\Documents\U of M\csci5607\GardenGenerator\GardenGenerator\x64\Debug\GardenGenerator.exe
