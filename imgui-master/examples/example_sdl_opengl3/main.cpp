@@ -93,9 +93,19 @@ float colR=1, colG=1, colB=1;
 
 
 //camera
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+glm::vec3 cameraPos = glm::vec3(0.0f, 1.8f, -0.8f);
+glm::vec3 cameraFront = glm::vec3(0.0f, -0.8f, 0.8f);
+glm::vec3 cameraUp = glm::vec3(0.0f, 0.0f, 1.0f);
+
+//glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp); 
+
+//glm::mat4 view = glm::lookAt(
+      //glm::vec3(0.0f, 1.8f, -0.8f),  //Cam Position
+      //glm::vec3(0.0f, 1.0f, 0.0f),  //Look at point
+      //glm::vec3(0.0f, 0.0f, 1.0f)); //Up
+
+
+
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
@@ -513,10 +523,7 @@ int main(int, char**)
     GLint uniModel = glGetUniformLocation(shaderProgram, "model");
     glUniformMatrix4fv(uniModel, 1, GL_FALSE, glm::value_ptr(model));*/
 
-    glm::mat4 view = glm::lookAt(
-      glm::vec3(0.0f, 1.8f, -0.8f),  //Cam Position
-      glm::vec3(0.0f, 1.0f, 0.0f),  //Look at point
-      glm::vec3(0.0f, 0.0f, 1.0f)); //Up
+    glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp); 
     GLint uniView = glGetUniformLocation(shaderProgram, "view");
     glUniformMatrix4fv(uniView, 1, GL_FALSE, glm::value_ptr(view));
 
