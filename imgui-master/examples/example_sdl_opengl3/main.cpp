@@ -321,6 +321,10 @@ int main(int, char**)
 	//color stuff
 	float col1[3] = { 0.5f, 0.27f, 0.07f };
 
+	//growth stuff
+	 static float growthv = 0.001f;
+	 static float lastgrowthv = 0.001f;
+
 
     // Main loop
     bool done = false;
@@ -397,7 +401,7 @@ int main(int, char**)
 
 
             //parameters for gui widgets
-            static float growthv = 0.0f;
+
             static float sizepar = 0.0f;
             static ImVec4 color = ImVec4(114.0f / 255.0f, 144.0f / 255.0f, 154.0f / 255.0f, 200.0f / 255.0f);
             //static int counter = 0;
@@ -407,7 +411,8 @@ int main(int, char**)
             ImGui::Text("here are some tools you can use!");               // Display some text (you can use a format strings too)
             ImGui::Checkbox("imgui library demo", &show_demo_window);      // Edit bools storing our window open/close state
 
-            ImGui::SliderFloat("tree growth variance", &growthv, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+            ImGui::SliderFloat("tree growth variance", &growthv, 0.0f, 0.1f);            // Edit 1 float using a slider from 0.0f to 1.0f
+
 
 
             /*ImGui::Text("Color widget:");
@@ -461,6 +466,19 @@ int main(int, char**)
 				}
 
 			}
+			ImGui::SameLine();
+			if (ImGui::Button("pause growth")) {
+				lastgrowthv = growthv;
+				growthv = 0;
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("continue growth")) {
+				growthv = lastgrowthv;
+				if(lastgrowthv == 0){
+					growthv = 0.001;
+				}
+			}
+
 
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
             ImGui::End();
@@ -511,6 +529,7 @@ int main(int, char**)
 		trees[i].color[0] = col1[0];
 		trees[i].color[1] = col1[1];
 		trees[i].color[2] = col1[2];
+		trees[i].growthSpeed = growthv;
 		trees[i].render(shaderProgram, uniModel, view, proj);
 	}
 
