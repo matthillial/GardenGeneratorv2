@@ -330,6 +330,7 @@ int main(int, char**)
 
 	//color stuff
 	float col1[3] = { 0.5f, 0.27f, 0.07f };
+	float col2[3] = { 0.0f, 255.0f, 0.00f };
 
 	//growth stuff
 	 static float growthv = 0.4f;
@@ -419,7 +420,7 @@ int main(int, char**)
             ImGui::Begin("Procedural Tree Generation GUI");
 
             ImGui::Text("here are some tools you can use!");               // Display some text (you can use a format strings too)
-            ImGui::Checkbox("imgui library demo", &show_demo_window);      // Edit bools storing our window open/close state
+            //ImGui::Checkbox("imgui library demo", &show_demo_window);      // Edit bools storing our window open/close state
 
             ImGui::SliderFloat("tree growth variance", &growthv, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
 
@@ -459,7 +460,8 @@ int main(int, char**)
             if (ImGui::Button(" - ")) {
                 trees.pop_back();
             }
-            ImGui::ColorEdit3("color 1", col1);
+            ImGui::ColorEdit3("Tree Color", col1);
+            ImGui::ColorEdit3("Leaf Color", col2);
 
 
             if (ImGui::Button("close application")) {
@@ -545,6 +547,9 @@ int main(int, char**)
 		trees[i].color[0] = col1[0];
 		trees[i].color[1] = col1[1];
 		trees[i].color[2] = col1[2];
+		trees[i].leafColor[0] = col2[0];
+		trees[i].leafColor[1] = col2[1];
+		trees[i].leafColor[2] = col2[2];
 		trees[i].growthSpeed = growthv;
 		trees[i].render(shaderProgram, uniModel, view, proj);
 	}
