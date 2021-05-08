@@ -320,8 +320,8 @@ int main(int, char**)
 
 	//color stuff
 	float col1[3] = { 0.5f, 0.27f, 0.07f };
-	
-	
+
+
     // Main loop
     bool done = false;
     while (!done)
@@ -408,7 +408,7 @@ int main(int, char**)
             ImGui::Checkbox("imgui library demo", &show_demo_window);      // Edit bools storing our window open/close state
 
             ImGui::SliderFloat("tree growth variance", &growthv, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-            
+
 
             /*ImGui::Text("Color widget:");
 			ImGui::SameLine(); HelpMarker(
@@ -416,10 +416,10 @@ int main(int, char**)
             "CTRL+click on individual component to input value.\n");
 			ImGui::ColorEdit3("MyColor##1", (float*)&color, misc_flags);
 			*/
-			
+
 			ImGui::Text("Add or Delete Tree: ");
 			ImGui::SameLine();
-			if (ImGui::Button(" + ")) {                           
+			if (ImGui::Button(" + ")) {
                 float choose = rand()%100 + 1;
                 float lrbound = rand()%10;
                 float negchoose = rand()%100;
@@ -441,13 +441,13 @@ int main(int, char**)
 				}
             }
             ImGui::SameLine();
-            if (ImGui::Button(" - ")) {                           
+            if (ImGui::Button(" - ")) {
                 trees.pop_back();
             }
             ImGui::ColorEdit3("color 1", col1);
-           
 
-            if (ImGui::Button("close application")) {                          
+
+            if (ImGui::Button("close application")) {
                 done = true;
             }
             ImGui::SameLine();
@@ -459,7 +459,7 @@ int main(int, char**)
 				if(trees.empty()){
 				trees.push_back(tree(start, rules1, glm::vec3(0, 0, 0), 10, 0.1));
 				}
-				
+
 			}
 
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
