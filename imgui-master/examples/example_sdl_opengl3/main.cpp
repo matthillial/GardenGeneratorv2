@@ -411,7 +411,7 @@ int main(int, char**)
             ImGui::Text("here are some tools you can use!");               // Display some text (you can use a format strings too)
             ImGui::Checkbox("imgui library demo", &show_demo_window);      // Edit bools storing our window open/close state
 
-            ImGui::SliderFloat("tree growth variance", &growthv, 0.0f, 0.1f);            // Edit 1 float using a slider from 0.0f to 1.0f
+            ImGui::SliderFloat("tree growth variance", &growthv, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
 
 
 
