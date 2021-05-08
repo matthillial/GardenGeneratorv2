@@ -97,7 +97,7 @@ glm::vec3 cameraPos = glm::vec3(0.0f, 1.8f, -0.8f);
 glm::vec3 cameraFront = glm::vec3(0.0f, -0.8f, 0.8f);
 glm::vec3 cameraUp = glm::vec3(0.0f, 0.0f, 1.0f);
 
-//glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp); 
+//glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
 //glm::mat4 view = glm::lookAt(
       //glm::vec3(0.0f, 1.8f, -0.8f),  //Cam Position
@@ -461,11 +461,11 @@ int main(int, char**)
             }
             ImGui::ColorEdit3("color 1", col1);
 
-			
+
             if (ImGui::Button("close application")) {
                 done = true;
             }
-            
+
             if (ImGui::Button("reset environment")) {
 				trees.clear();
 			}
@@ -476,7 +476,7 @@ int main(int, char**)
 				}
 
 			}
-			
+
 			if (ImGui::Button("pause growth")) {
 				lastgrowthv = growthv;
 				growthv = 0;
@@ -488,15 +488,15 @@ int main(int, char**)
 					growthv = 0.4;
 				}
 			}
-			
-			
+
+
 			if (ImGui::Button("reset camera")) {
 				cameraPos = glm::vec3(0.0f, 1.8f, -0.8f);
 				cameraFront = glm::vec3(0.0f, -0.8f, 0.8f);
 				cameraUp = glm::vec3(0.0f, 0.0f, 1.0f);
 			}
-			
-			
+
+
 
 
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
@@ -532,7 +532,7 @@ int main(int, char**)
     GLint uniModel = glGetUniformLocation(shaderProgram, "model");
     glUniformMatrix4fv(uniModel, 1, GL_FALSE, glm::value_ptr(model));*/
 
-    glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp); 
+    glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
     GLint uniView = glGetUniformLocation(shaderProgram, "view");
     glUniformMatrix4fv(uniView, 1, GL_FALSE, glm::value_ptr(view));
 
