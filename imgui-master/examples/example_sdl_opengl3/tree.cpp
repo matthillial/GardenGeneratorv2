@@ -46,12 +46,14 @@ public:
 	glm::vec3 rootPos;
 	float angle;
 	float segLength;
-	int growthTime;
+	float growthTime;
+	float branchTime;
 	int segments;
 	int segmentLimit = 256;
 	map<char, string> rules;
 	int vertices = 0;
 	float growthSpeed;
+	float scale = 1;
 
 	float segment2d[18] = {
 		 -0.5f, 0.0f, 0.f,
@@ -117,9 +119,10 @@ public:
 		angle = angleIn;
 		segLength = segLengthIn;
 		growthTime = 11;
+		branchTime = 11;
 		rules = rulesIn;
 		segments = 0;
-		growthSpeed = 0.01;
+		growthSpeed = 1;
 		for (int i = 0; i < start.size(); i++) {
 			if (start.at(i).first == 'F') segments++;
 		}
@@ -144,24 +147,27 @@ public:
 	}
 
 	void render(GLuint shaderProgram, GLint uniModel, glm::mat4 view, glm::mat4 proj) {
-		growthTime--;
+		growthTime -= growthSpeed;
+		branchTime -= growthSpeed;
 		stack<glm::mat4> branchNodes;
 		glm::mat4 model = glm::mat4(1);
 		model = glm::translate(model, rootPos);
 		vector<pair<char, float>> newStructure;
 		int frameSkip = 10;
+		scale += 0.01;
 
 
 
-		if (growthTime % frameSkip == 0) {
-			if (growthTime <= 0) printf("GROW\n");
+		//if (growthTime % frameSkip == 0) {
+		if ((growthTime <= 0 || branchTime <= 0) && segments < 200) {
+			//printf("GROW\n");
 			vertices = 0;
 			treeModel.clear();
 			for (int i = 0; i < structurev2.size(); i++) {
 				//Apply growth rules
-				if (growthTime <= 0) {
+				if (branchTime <= 0) {
 
-					printf("%c, %f; ", structurev2.at(i).first, structurev2.at(i).second);
+					//printf("%c, %f; ", structurev2.at(i).first, structurev2.at(i).second);
 					newStructure.push_back(structurev2.at(i));
 					if (rules.count(structurev2.at(i).first) > 0) {
 						string insertRules = rules[structurev2.at(i).first];
@@ -182,7 +188,8 @@ public:
 				}
 
 				if (structurev2.at(i).first == 'F') {
-					structurev2.at(i).second += growthSpeed / 10 * frameSkip;
+					//structurev2.at(i).second += growthSpeed / 10 * frameSkip;
+					structurev2.at(i).second += 0.001 * frameSkip;
 					//printf("height: %f\n", structurev2.at(i).second);
 					glm::mat4 scaleModel = glm::scale(model, glm::vec3(0.01, structurev2.at(i).second, 0.01));
 					//scaleModel = glm::translate(scaleModel, glm::vec3(0, 5, 0));
@@ -238,6 +245,7 @@ public:
 
 
 		model = glm::mat4(1);
+		//model = glm::scale(model, glm::vec3(1,scale,1));
 		glUniformMatrix4fv(uniModel, 1, GL_FALSE, glm::value_ptr(model));
 		glBindVertexArray(vao);
 
@@ -249,10 +257,12 @@ public:
 		glBufferData(GL_ARRAY_BUFFER, vertices * 8 * sizeof(float), &treeModel[0], GL_STATIC_DRAW); //upload vertices to vbo
 		glDrawArrays(GL_TRIANGLES, 0, vertices); //Number of vertices*/
 
-		if (growthTime <= 0) {
+		if (branchTime <= 0) {
 			structurev2 = newStructure;
-			growthTime = 1000;
-			printf("\n");
+			growthTime = 2;
+			branchTime = 40;
+			//printf("\n");
 		}
+		if (growthTime <= 0) growthTime = 10;
 	}
 };
