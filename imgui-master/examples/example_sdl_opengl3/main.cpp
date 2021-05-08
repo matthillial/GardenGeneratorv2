@@ -404,9 +404,7 @@ int main(int, char**)
 
             static float sizepar = 0.0f;
             static ImVec4 color = ImVec4(114.0f / 255.0f, 144.0f / 255.0f, 154.0f / 255.0f, 200.0f / 255.0f);
-            //static int counter = 0;
-
-            ImGui::Begin("Procedural Tree Generation GUI");
+            //static int counter = 0;");
 
             ImGui::Text("here are some tools you can use!");               // Display some text (you can use a format strings too)
             ImGui::Checkbox("imgui library demo", &show_demo_window);      // Edit bools storing our window open/close state
