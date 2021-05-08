@@ -214,7 +214,7 @@ int main(int argc, char *argv[]){
   map<char, string> rules1 = { {'F', "F[-F][+F]"} };
   vector<pair<char, float>> start;
   start.push_back(make_pair('F', 0.0f));
-  trees.push_back(tree(start, rules1, glm::vec3(0, 0, 0), 10, 0.1));
+  trees.push_back(tree(start, rules, glm::vec3(0, 0, 0), 10, 0.1));
   //trees.at(0).initGL(posAttrib, colAttrib);
 
 	//Build a Vertex Array Object. This stores mapping from shader inputs/attributes to VBO data
