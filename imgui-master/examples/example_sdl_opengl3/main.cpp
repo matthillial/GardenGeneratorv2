@@ -48,6 +48,8 @@ using namespace gl;
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
+#include "tree.cpp"
+
 #include <cstdio>
 #include <iostream>
 #include <fstream>
@@ -57,8 +59,31 @@ void drawGeometry(int shaderProgram, int model1_start, int model1_numVerts, int 
 
 using namespace std;
 
-int screenWidth = 1500; 
-int screenHeight = 800;  
+// Shader sources
+const GLchar* vertexSource =
+    "#version 150 core\n"
+    "in vec3 position;"
+    "in vec3 inColor;"
+    "out vec3 Color;"
+    "uniform mat4 model;"
+    "uniform mat4 view;"
+    "uniform mat4 proj;"
+    "void main() {"
+    "   Color = inColor;"
+    "   gl_Position = proj * view * model * vec4(position,1.0);"
+    "}";
+
+const GLchar* fragmentSource =
+    "#version 150 core\n"
+    "in vec3 Color;"
+    "out vec4 outColor;"
+    "void main() {"
+    "   outColor = vec4(Color, 1.0);"
+    "}";
+
+
+int screenWidth = 1500;
+int screenHeight = 800;
 float timePast = 0;
 
 //SJG: Store the object coordinates
@@ -79,6 +104,8 @@ bool DEBUG_ON = true;
 GLuint InitShader(const char* vShaderFileName, const char* fShaderFileName);
 bool fullscreen = false;
 void Win2PPM(int width, int height);
+
+vector<tree> trees;
 
 //srand(time(NULL));
 float rand01(){
@@ -154,103 +181,64 @@ int main(int, char**)
         fprintf(stderr, "Failed to initialize OpenGL loader!\n");
         return 1;
     }
-    
+
     printf("Vendor:   %s\n", glGetString(GL_VENDOR));
 	printf("Renderer: %s\n", glGetString(GL_RENDERER));
 	printf("Version:  %s\n\n", glGetString(GL_VERSION));
-	
-	
-	//Load Model 1
-	ifstream modelFile;
-	modelFile.open("models/teapot.txt");
-	int numLines = 0;
-	modelFile >> numLines;
-	float* model1 = new float[numLines];
-	for (int i = 0; i < numLines; i++){
-		modelFile >> model1[i];
-	}
-	printf("%d\n",numLines);
-	int numVertsTeapot = numLines/8;
-	modelFile.close();
-	
-	//Load Model 2
-	modelFile.open("models/cube.txt");
-	numLines = 0;
-	modelFile >> numLines;
-	float* model2 = new float[numLines];
-	for (int i = 0; i < numLines; i++){
-		modelFile >> model2[i];
-	}
-	printf("%d\n",numLines);
-	int numVertsKnot = numLines/8;
-	modelFile.close();
-	
-	//SJG: I load each model in a different array, then concatenate everything in one big array
-	// This structure works, but there is room for improvement here. Eg., you should store the start
-	// and end of each model a data structure or array somewhere.
-	//Concatenate model arrays
-	float* modelData = new float[(numVertsTeapot+numVertsKnot)*8];
-	copy(model1, model1+numVertsTeapot*8, modelData);
-	copy(model2, model2+numVertsKnot*8, modelData+numVertsTeapot*8);
-	int totalNumVerts = numVertsTeapot+numVertsKnot;
-	int startVertTeapot = 0;  //The teapot is the first model in the VBO
-	int startVertKnot = numVertsTeapot; //The knot starts right after the taepot
-	
-	
-	//// Allocate Texture 0 (Wood) ///////
-	SDL_Surface* surface = SDL_LoadBMP("wood.bmp");
-	if (surface==NULL){ //If it failed, print the error
-        printf("Error: \"%s\"\n",SDL_GetError()); return 1;
-    }
-    GLuint tex0;
-    glGenTextures(1, &tex0);
-    
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, tex0);
-    
-    //What to do outside 0-1 range
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    
-    //Load the texture into memory
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, surface->w,surface->h, 0, GL_BGR,GL_UNSIGNED_BYTE,surface->pixels);
-    glGenerateMipmap(GL_TEXTURE_2D); //Mip maps the texture
-    
-    SDL_FreeSurface(surface);
-    //// End Allocate Texture ///////
+
+		////////////////////////////////////////////////////////////////// MATT'S PORTION /////////////////////////////////////////////////////////////////////////
+		//Load the vertex Shader
+	  GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+	  glShaderSource(vertexShader, 1, &vertexSource, NULL);
+	  glCompileShader(vertexShader);
+
+	  //Let's double check the shader compiled
+	  GLint status;
+	  glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &status);
+	  if (!status){
+	    char buffer[512];
+	    glGetShaderInfoLog(vertexShader, 512, NULL, buffer);
+	    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+	                        "Compilation Error",
+	                        "Failed to Compile: Check Consol Output.",
+	                        NULL);
+	    printf("Vertex Shader Compile Failed. Info:\n\n%s\n",buffer);
+	  }
+
+	  GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+	  glShaderSource(fragmentShader, 1, &fragmentSource, NULL);
+	  glCompileShader(fragmentShader);
+
+	  //Double check the shader compiled
+	  glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &status);
+	  if (!status){
+	    char buffer[512];
+	    glGetShaderInfoLog(fragmentShader, 512, NULL, buffer);
+	    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+	                        "Compilation Error",
+	                        "Failed to Compile: Check Consol Output.",
+	                        NULL);
+	    printf("Fragment Shader Compile Failed. Info:\n\n%s\n",buffer);
+	  }
+
+		GLuint shaderProgram = glCreateProgram();
+	  glAttachShader(shaderProgram, vertexShader);
+	  glAttachShader(shaderProgram, fragmentShader);
+	  glBindFragDataLocation(shaderProgram, 0, "outColor"); // set output
+	  glLinkProgram(shaderProgram); //run the linker
+
+	  GLint posAttrib = glGetAttribLocation(shaderProgram, "position");
+	  GLint colAttrib = glGetAttribLocation(shaderProgram, "inColor");
+
+		map<char, string> rules = { {'F', "FF-[-F+F+F]+[+F-F-F]"} };
+	  map<char, string> rules1 = { {'F', "F[-F][+F]"} };
+	  vector<pair<char, float>> start;
+	  start.push_back(make_pair('F', 0.0f));
+	  trees.push_back(tree(start, rules1, glm::vec3(0, 0, 0), 10, 0.1));
 
 
-	//// Allocate Texture 1 (Brick) ///////
-	SDL_Surface* surface1 = SDL_LoadBMP("brick.bmp");
-	if (surface==NULL){ //If it failed, print the error
-        printf("Error: \"%s\"\n",SDL_GetError()); return 1;
-    }
-    GLuint tex1;
-    glGenTextures(1, &tex1);
-    
-    //Load the texture into memory
-    glActiveTexture(GL_TEXTURE1);
-    
-    glBindTexture(GL_TEXTURE_2D, tex1);
-    //What to do outside 0-1 range
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    //How to filter
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, surface1->w,surface1->h, 0, GL_BGR,GL_UNSIGNED_BYTE,surface1->pixels);
-    glGenerateMipmap(GL_TEXTURE_2D); //Mip maps the texture
-    
-    SDL_FreeSurface(surface1);
-	//// End Allocate Texture ///////
-    
-    
-    
     //Build a Vertex Array Object (VAO) to store mapping of shader attributse to VBO
-	GLuint vao;
+	/*GLuint vao;
 	glGenVertexArrays(1, &vao); //Create a VAO
 	glBindVertexArray(vao); //Bind the above created VAO to the current context
 
@@ -261,23 +249,23 @@ int main(int, char**)
 	glBufferData(GL_ARRAY_BUFFER, totalNumVerts*8*sizeof(float), modelData, GL_STATIC_DRAW); //upload vertices to vbo
 	//GL_STATIC_DRAW means we won't change the geometry, GL_DYNAMIC_DRAW = geometry changes infrequently
 	//GL_STREAM_DRAW = geom. changes frequently.  This effects which types of GPU memory is used
-	
-	int texturedShader = InitShader("textured-Vertex.glsl", "textured-Fragment.glsl");	
-	
-	//Tell OpenGL how to set fragment shader input 
-	GLint posAttrib = glGetAttribLocation(texturedShader, "position");
+
+	int texturedShader = InitShader("textured-Vertex.glsl", "textured-Fragment.glsl");*/
+
+	//Tell OpenGL how to set fragment shader input
+	/*GLint posAttrib = glGetAttribLocation(texturedShader, "position");
 	glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), 0);
 	  //Attribute, vals/attrib., type, isNormalized, stride, offset
 	glEnableVertexAttribArray(posAttrib);
-	
+
 	//GLint colAttrib = glGetAttribLocation(phongShader, "inColor");
 	//glVertexAttribPointer(colAttrib, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)(3*sizeof(float)));
 	//glEnableVertexAttribArray(colAttrib);
-	
+
 	GLint normAttrib = glGetAttribLocation(texturedShader, "inNormal");
 	glVertexAttribPointer(normAttrib, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)(5*sizeof(float)));
 	glEnableVertexAttribArray(normAttrib);
-	
+
 	GLint texAttrib = glGetAttribLocation(texturedShader, "inTexcoord");
 	glEnableVertexAttribArray(texAttrib);
 	glVertexAttribPointer(texAttrib, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)(3*sizeof(float)));
@@ -285,13 +273,13 @@ int main(int, char**)
 	GLint uniView = glGetUniformLocation(texturedShader, "view");
 	GLint uniProj = glGetUniformLocation(texturedShader, "proj");
 
-	glBindVertexArray(0); //Unbind the VAO in case we want to create a new one	
-                       
-	
-	glEnable(GL_DEPTH_TEST);  
+	glBindVertexArray(0); //Unbind the VAO in case we want to create a new one*/
 
-	
-    
+
+	glEnable(GL_DEPTH_TEST);
+
+
+
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -338,12 +326,12 @@ int main(int, char**)
         // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
         // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
         SDL_Event event;
-        
-        //timePast = SDL_GetTicks()/1000.f; 
-		float currentFrame = SDL_GetTicks()/1000.f; 
+
+        //timePast = SDL_GetTicks()/1000.f;
+		float currentFrame = SDL_GetTicks()/1000.f;
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
-		
+
         while (SDL_PollEvent(&event))
         {
 			float cameraSpeed = 2.0f * deltaTime;
@@ -352,7 +340,7 @@ int main(int, char**)
                 done = true;
             if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(window))
                 done = true;
-                
+
             //player movement and camera movement (implemented on keyboard only)
 			if (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_w){ //If "w" is pressed
 				cameraPos += cameraSpeed * cameraFront;
@@ -370,6 +358,25 @@ int main(int, char**)
 			}
         }
 
+				///////////////////////////////////////////////////////////////// MATT'S PORTION AGAIN //////////////////////////////////////////////////////////////////////////
+
+				/*glm::mat4 view = glm::lookAt(
+			      glm::vec3(0.0f, 1.8f, -0.8f),  //Cam Position
+			      glm::vec3(0.0f, 1.0f, 0.0f),  //Look at point
+			      glm::vec3(0.0f, 0.0f, 1.0f)); //Up
+			    GLint uniView = glGetUniformLocation(shaderProgram, "view");
+			    glUniformMatrix4fv(uniView, 1, GL_FALSE, glm::value_ptr(view));
+
+			    glm::mat4 proj = glm::perspective(3.14f/4, 800.0f / 600.0f, 0.5f, 10.0f); //FOV, aspect, near, far
+			    GLint uniProj = glGetUniformLocation(shaderProgram, "proj");
+			    glUniformMatrix4fv(uniProj, 1, GL_FALSE, glm::value_ptr(proj));
+
+				GLint uniModel = glGetUniformLocation(shaderProgram, "model");
+
+				for (int i = 0; i < trees.size(); i++) {
+					trees[i].render(shaderProgram, uniModel, view, proj);
+				}*/
+
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplSDL2_NewFrame(window);
@@ -381,47 +388,47 @@ int main(int, char**)
 
         // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
         {
-            
-            
+
+
             //parameters for gui widgets
             static float growthv = 0.0f;
             static float sizepar = 0.0f;
             static ImVec4 color = ImVec4(114.0f / 255.0f, 144.0f / 255.0f, 154.0f / 255.0f, 200.0f / 255.0f);
             //static int counter = 0;
 
-            ImGui::Begin("Procedural Tree Generation GUI");             
+            ImGui::Begin("Procedural Tree Generation GUI");
 
             ImGui::Text("here are some tools you can use!");               // Display some text (you can use a format strings too)
             ImGui::Checkbox("imgui library demo", &show_demo_window);      // Edit bools storing our window open/close state
 
             ImGui::SliderFloat("tree growth variance", &growthv, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
             ImGui::SliderFloat("size parameter", &sizepar, 0.0f, 100.0f);
-            
+
             /*ImGui::Text("Color widget:");
 			ImGui::SameLine(); HelpMarker(
             "Click on the color square to open a color picker.\n"
             "CTRL+click on individual component to input value.\n");
 			ImGui::ColorEdit3("MyColor##1", (float*)&color, misc_flags);
-			*/	
-            
+			*/
+
 
             if (ImGui::Button("close application")) {                           // Buttons return true when clicked (most widgets return true when edited/activated)
                 done = true;
             }
             ImGui::SameLine();
             if (ImGui::Button("reset environment")) {
-			
+
 			}
 			ImGui::SameLine();
             if (ImGui::Button("generate environment")) {
-			
+
 			}
 
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
             ImGui::End();
         }
-        
-        
+
+
 
         // 3. Show another simple window.
         //if (show_another_window)
@@ -438,29 +445,67 @@ int main(int, char**)
         glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
         glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  
 
-        
-        
-        
-        
-        
-        
-        
+				// Clear the screen to default color
+    //glClearColor(.2f, 0.4f, 0.8f, 1.0f);
+  //  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    float time = SDL_GetTicks()/1000.f;
+    /*glm::mat4 model = glm::mat4(1);
+    model = glm::rotate(model,time * 3.14f/2,glm::vec3(0.0f, 1.0f, 1.0f));
+    model = glm::rotate(model,time * 3.14f/4,glm::vec3(1.0f, 0.0f, 0.0f));
+    GLint uniModel = glGetUniformLocation(shaderProgram, "model");
+    glUniformMatrix4fv(uniModel, 1, GL_FALSE, glm::value_ptr(model));*/
+
+    glm::mat4 view = glm::lookAt(
+      glm::vec3(0.0f, 1.8f, -0.8f),  //Cam Position
+      glm::vec3(0.0f, 1.0f, 0.0f),  //Look at point
+      glm::vec3(0.0f, 0.0f, 1.0f)); //Up
+    GLint uniView = glGetUniformLocation(shaderProgram, "view");
+    glUniformMatrix4fv(uniView, 1, GL_FALSE, glm::value_ptr(view));
+
+    glm::mat4 proj = glm::perspective(3.14f/4, 800.0f / 600.0f, 0.5f, 10.0f); //FOV, aspect, near, far
+    GLint uniProj = glGetUniformLocation(shaderProgram, "proj");
+    glUniformMatrix4fv(uniProj, 1, GL_FALSE, glm::value_ptr(proj));
+
+	GLint uniModel = glGetUniformLocation(shaderProgram, "model");
+	for (int i = 0; i < trees.size(); i++) {
+		trees[i].render(shaderProgram, uniModel, view, proj);
+	}
+
+    //glBindVertexArray(vao);  //Bind the VAO for the shader(s) we are using
+    //glDrawArrays(GL_TRIANGLES, 0, 36); //Number of vertices
+    //Win2PPM(screen_width,screen_height); //Will save an image
+
+    //SDL_GL_SwapWindow(window); //Double buffering
+
+    //float t_end = SDL_GetTicks();
+		char update_title[100];
+		/*float time_per_frame = t_end-t_start;
+		avg_render_time = .98*avg_render_time + .02*time_per_frame; //Weighted average for smoothing*/
+		//sprintf_s(update_title,"%s [Update: %3.0f ms]\n",window_title,avg_render_time);
+		SDL_SetWindowTitle(window, update_title);
+
+
+
+
+
+
+
         //my stuff
-		glUseProgram(texturedShader);
+		/*glUseProgram(texturedShader);
 
 
-		
-		
+
+
 		//camera
-		glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp); 
-		
+		glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+
 		/*glm::mat4 view = glm::lookAt(
 		glm::vec3(3.f, 0.f, 0.f),  //Cam Position
 		glm::vec3(0.0f, 0.0f, 0.0f),  //Look at point
 		glm::vec3(0.0f, 0.0f, 1.0f)); //Up
-		*/
+
 		glUniformMatrix4fv(uniView, 1, GL_FALSE, glm::value_ptr(view));
 
 		glm::mat4 proj = glm::perspective(3.14f/4, screenWidth / (float) screenHeight, 1.0f, 10.0f); //FOV, aspect, near, far
@@ -476,18 +521,27 @@ int main(int, char**)
 		glUniform1i(glGetUniformLocation(texturedShader, "tex1"), 1);
 
 		glBindVertexArray(vao);
-		drawGeometry(texturedShader, startVertTeapot, numVertsTeapot, startVertKnot, numVertsKnot);
+		//drawGeometry(texturedShader, startVertTeapot, numVertsTeapot, startVertKnot, numVertsKnot);*/
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 		SDL_GL_SwapWindow(window); //Double buffering
-        
-        
-        
-        
-        
+
+
+
+
+
     }
 
     // Cleanup
+		glDeleteProgram(shaderProgram);
+	  glDeleteShader(fragmentShader);
+	  glDeleteShader(vertexShader);
+
+	  for (int i = 0; i < trees.size(); i++) {
+		  glDeleteBuffers(1, &trees.at(i).vao);
+		  glDeleteBuffers(1, &trees.at(i).vbo);
+	  }
+
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();
@@ -503,13 +557,13 @@ int main(int, char**)
 
 
 void drawGeometry(int shaderProgram, int model1_start, int model1_numVerts, int model2_start, int model2_numVerts){
-	
+
 	GLint uniColor = glGetUniformLocation(shaderProgram, "inColor");
 	glm::vec3 colVec(colR,colG,colB);
 	glUniform3fv(uniColor, 1, glm::value_ptr(colVec));
-      
+
   GLint uniTexID = glGetUniformLocation(shaderProgram, "texID");
-	  
+
 	//************
 	//Draw model #1 the first time
 	//This model is stored in the VBO starting a offest model1_start and with model1_numVerts num of verticies
@@ -524,12 +578,12 @@ void drawGeometry(int shaderProgram, int model1_start, int model1_numVerts, int 
 	glUniformMatrix4fv(uniModel, 1, GL_FALSE, glm::value_ptr(model)); //pass model matrix to shader
 
 	//Set which texture to use (-1 = no texture)
-	glUniform1i(uniTexID, -1); 
+	glUniform1i(uniTexID, -1);
 
 	//Draw an instance of the model (at the position & orientation specified by the model matrix above)
 	glDrawArrays(GL_TRIANGLES, model1_start, model1_numVerts); //(Primitive Type, Start Vertex, Num Verticies)
-	
-	
+
+
 	//************
 	//Draw model #1 the second time
 	//This model is stored in the VBO starting a offest model1_start and with model1_numVerts num. of verticies
@@ -546,7 +600,7 @@ void drawGeometry(int shaderProgram, int model1_start, int model1_numVerts, int 
 
   //Draw an instance of the model (at the position & orientation specified by the model matrix above)
 	glDrawArrays(GL_TRIANGLES, model1_start, model1_numVerts); //(Primitive Type, Start Vertex, Num Verticies)
-		
+
 	//************
 	//Draw model #2 once
 	//This model is stored in the VBO starting a offest model2_start and with model2_numVerts num of verticies
@@ -559,7 +613,7 @@ void drawGeometry(int shaderProgram, int model1_start, int model1_numVerts, int 
 	model = glm::translate(model,glm::vec3(0.0f,-1.5f,0.0f));
 
 	//Set which texture to use (1 = brick texture ... bound to GL_TEXTURE1)
-	glUniform1i(uniTexID, 0); 
+	glUniform1i(uniTexID, 0);
 	glUniformMatrix4fv(uniModel, 1, GL_FALSE, glm::value_ptr(model));
 
 	//Draw an instance of the model (at the position & orientation specified by the model matrix above)
@@ -641,7 +695,7 @@ GLuint InitShader(const char* vShaderFileName, const char* fShaderFileName){
 	const char *vv = vs_text;
 	glShaderSource(vertex_shader, 1, &vv, NULL);  //Read source
 	glCompileShader(vertex_shader); // Compile shaders
-	
+
 	// Check for errors
 	GLint  compiled;
 	glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &compiled);
@@ -659,13 +713,13 @@ GLuint InitShader(const char* vShaderFileName, const char* fShaderFileName){
 		}
 		exit(1);
 	}
-	
+
 	// Load Fragment Shader
 	const char *ff = fs_text;
 	glShaderSource(fragment_shader, 1, &ff, NULL);
 	glCompileShader(fragment_shader);
 	glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &compiled);
-	
+
 	//Check for Errors
 	if (!compiled) {
 		printf("Fragment shader failed to compile\n");
@@ -694,4 +748,3 @@ GLuint InitShader(const char* vShaderFileName, const char* fShaderFileName){
 
 	return program;
 }
-
