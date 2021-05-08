@@ -230,8 +230,10 @@ int main(int, char**)
 	  GLint posAttrib = glGetAttribLocation(shaderProgram, "position");
 	  GLint colAttrib = glGetAttribLocation(shaderProgram, "inColor");
 
-		map<char, string> rules = { {'F', "FF-[-F+F+F]+[+F-F-F]"} };
+	  map<char, string> rules = { {'F', "F[+F]F[-F]F"} };
 	  map<char, string> rules1 = { {'F', "F[-F][+F]"} };
+	  map<char, string> rules2 = { {'F', "FF[-F][-F][+F]F"} };
+	  map<char, string> rules3 = { {'F', "F[+F]F[-F][F]"} };
 	  vector<pair<char, float>> start;
 	  start.push_back(make_pair('F', 0.0f));
 	  trees.push_back(tree(start, rules1, glm::vec3(0, 0, 0), 10, 0.1));
@@ -316,6 +318,10 @@ int main(int, char**)
     //bool show_another_window = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
+	//color stuff
+	float col1[3] = { 0.5f, 0.27f, 0.07f };
+	
+	
     // Main loop
     bool done = false;
     while (!done)
@@ -402,7 +408,7 @@ int main(int, char**)
             ImGui::Checkbox("imgui library demo", &show_demo_window);      // Edit bools storing our window open/close state
 
             ImGui::SliderFloat("tree growth variance", &growthv, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-            ImGui::SliderFloat("size parameter", &sizepar, 0.0f, 100.0f);
+            
 
             /*ImGui::Text("Color widget:");
 			ImGui::SameLine(); HelpMarker(
@@ -410,18 +416,50 @@ int main(int, char**)
             "CTRL+click on individual component to input value.\n");
 			ImGui::ColorEdit3("MyColor##1", (float*)&color, misc_flags);
 			*/
+			
+			ImGui::Text("Add or Delete Tree: ");
+			ImGui::SameLine();
+			if (ImGui::Button(" + ")) {                           
+                float choose = rand()%100 + 1;
+                float lrbound = rand()%10;
+                float negchoose = rand()%100;
+                if(negchoose > 50){
+					lrbound = lrbound * -1;
+				}
+				float bbound = rand()%33;
+                if(choose >= 1 && choose <= 25){
+					trees.push_back(tree(start, rules, glm::vec3(lrbound/10, 0, bbound/10), 10, 0.1));
+				}
+				if(choose >= 26 && choose <= 50){
+					trees.push_back(tree(start, rules1, glm::vec3(lrbound/10, 0, bbound/10), 10, 0.1));
+				}
+				if(choose >= 51 && choose <= 75){
+					trees.push_back(tree(start, rules2, glm::vec3(lrbound/10, 0, bbound/10), 10, 0.1));
+				}
+				if(choose >= 76 && choose <= 100){
+					trees.push_back(tree(start, rules3, glm::vec3(lrbound, 0, bbound), 10, 0.1));
+				}
+            }
+            ImGui::SameLine();
+            if (ImGui::Button(" - ")) {                           
+                trees.pop_back();
+            }
+            ImGui::ColorEdit3("color 1", col1);
+           
 
-
-            if (ImGui::Button("close application")) {                           // Buttons return true when clicked (most widgets return true when edited/activated)
+            if (ImGui::Button("close application")) {                          
                 done = true;
             }
             ImGui::SameLine();
             if (ImGui::Button("reset environment")) {
-
+				trees.clear();
 			}
 			ImGui::SameLine();
             if (ImGui::Button("generate environment")) {
-
+				if(trees.empty()){
+				trees.push_back(tree(start, rules1, glm::vec3(0, 0, 0), 10, 0.1));
+				}
+				
 			}
 
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
@@ -470,6 +508,9 @@ int main(int, char**)
 
 	GLint uniModel = glGetUniformLocation(shaderProgram, "model");
 	for (int i = 0; i < trees.size(); i++) {
+		trees[i].color[0] = col1[0];
+		trees[i].color[1] = col1[1];
+		trees[i].color[2] = col1[2];
 		trees[i].render(shaderProgram, uniModel, view, proj);
 	}
 
