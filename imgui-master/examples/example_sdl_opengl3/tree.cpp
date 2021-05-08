@@ -54,6 +54,7 @@ public:
 	int vertices = 0;
 	float growthSpeed;
 	float scale = 1;
+	float taper = 0.9;
 
 	float segment2d[18] = {
 		 -0.5f, 0.0f, 0.f,
@@ -107,8 +108,14 @@ public:
 		  -0.5f,  1.0f,  0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
 		  -0.5f,  1.0f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f
 	};
+	float leaf[24] = {
+			0.0f,  0.0f,  0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
+			-0.5f,  1.0f,  0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
+			0.5f,  1.0f,  0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f
+	};
 	vector<float> treeModel;
 	float color[3] = { 0.5f, 0.27f, 0.07f };
+	float leafColor[3] = {0.0f, 1.0f, 0.0f};
 
 	GLuint vao;
 	GLuint vbo;
@@ -195,7 +202,11 @@ public:
 					//scaleModel = glm::translate(scaleModel, glm::vec3(0, 5, 0));
 					//transform segment vertices by scalemodel and add to treemodel
 					for (int j = 0; j < sizeof(segment)/sizeof(segment[0]); j += 8) {
-						glm::vec4 vertex = scaleModel * glm::vec4(segment[j], segment[j + 1], segment[j + 2], 1);
+						glm::vec4 modelVertex = glm::vec4(segment[j], segment[j + 1], segment[j + 2], 1);
+						if (modelVertex[2] == 1) {
+
+						}
+						glm::vec4 vertex = scaleModel * modelVertex;
 						//printf("Vertex: %f, %f, %f\n", vertex[0], vertex[1], vertex[2]);
 						treeModel.push_back(vertex[0]);
 						treeModel.push_back(vertex[1]);
@@ -224,6 +235,25 @@ public:
 					branchNodes.push(model);
 				}
 				if (structurev2.at(i).first == ']') {
+					glm::mat4 scaleModel = glm::scale(model, glm::vec3(0.02, 0.05, 0.02));
+					//scaleModel = glm::translate(scaleModel, glm::vec3(0, 5, 0));
+					//transform segment vertices by scalemodel and add to treemodel
+					for (int j = 0; j < sizeof(leaf)/sizeof(leaf[0]); j += 8) {
+						glm::vec4 modelVertex = glm::vec4(leaf[j], leaf[j + 1], leaf[j + 2], 1);
+
+						glm::vec4 vertex = scaleModel * modelVertex;
+						//printf("Vertex: %f, %f, %f\n", vertex[0], vertex[1], vertex[2]);
+						treeModel.push_back(vertex[0]);
+						treeModel.push_back(vertex[1]);
+						treeModel.push_back(vertex[2]);
+						treeModel.push_back(leafColor[0]);
+						treeModel.push_back(leafColor[1]);
+						treeModel.push_back(leafColor[2]);
+						treeModel.push_back(0.0f); //u
+						treeModel.push_back(0.0f); //v
+						vertices++;
+					}
+
 					model = branchNodes.top();
 					branchNodes.pop();
 				}
