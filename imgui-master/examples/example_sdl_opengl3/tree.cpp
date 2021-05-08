@@ -51,6 +51,7 @@ public:
 	int segmentLimit = 256;
 	map<char, string> rules;
 	int vertices = 0;
+	float growthSpeed;
 
 	float segment2d[18] = {
 		 -0.5f, 0.0f, 0.f,
@@ -118,6 +119,7 @@ public:
 		growthTime = 11;
 		rules = rulesIn;
 		segments = 0;
+		growthSpeed = 0.01;
 		for (int i = 0; i < start.size(); i++) {
 			if (start.at(i).first == 'F') segments++;
 		}
@@ -180,7 +182,7 @@ public:
 				}
 
 				if (structurev2.at(i).first == 'F') {
-					structurev2.at(i).second += 0.0001 * frameSkip;
+					structurev2.at(i).second += growthSpeed / 10 * frameSkip;
 					//printf("height: %f\n", structurev2.at(i).second);
 					glm::mat4 scaleModel = glm::scale(model, glm::vec3(0.01, structurev2.at(i).second, 0.01));
 					//scaleModel = glm::translate(scaleModel, glm::vec3(0, 5, 0));
